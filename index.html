@@ -1,1 +1,461 @@
-hello world
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magenta Challan Data</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            text-align: center;
+            color: #800080;
+            margin-bottom: 10px;
+        }
+        .header-info {
+            text-align: right;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            color: #555;
+        }
+        .container {
+            max-width: 100%;
+            overflow-x: auto;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 5px;
+            background: #fff;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            white-space: nowrap;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #800080; /* Magenta color */
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .pagination button {
+            background-color: #800080;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 12px;
+            margin: 0 2px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .pagination button:hover {
+            background-color: #600060;
+        }
+        .pagination button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .pagination .page-info {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 0 5px;
+            background-color: #fff;
+        }
+        .search-container {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .search-box {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 300px;
+        }
+        .records-per-page {
+            display: flex;
+            align-items: center;
+        }
+        .records-per-page select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-left: 10px;
+        }
+        .page-selector {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .page-selector input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 50px;
+            margin: 0 5px;
+            text-align: center;
+        }
+        .page-selector button {
+            background-color: #800080;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .spinner {
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #800080;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @media screen and (max-width: 768px) {
+            .search-container {
+                flex-direction: column;
+            }
+            .search-box {
+                width: 100%;
+            }
+            .pagination {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <h1>Magenta Challan Data</h1>
+    
+    <div class="header-info">
+        <p>Date: 2025-08-07 06:15:53</p>
+        <p>User: rajniwebdeveloper</p>
+    </div>
+    
+    <div class="search-container">
+        <input type="text" id="searchInput" class="search-box" placeholder="Search for anything..." onkeyup="filterTable()">
+        <div class="records-per-page">
+            <label for="recordsPerPage">Records per page:</label>
+            <select id="recordsPerPage" onchange="changeRecordsPerPage()">
+                <option value="10">10</option>
+                <option value="20" selected>20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="container">
+        <table id="challanTable">
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>Registration Number</th>
+                    <th>Chassis No</th>
+                    <th>Challan No</th>
+                    <th>Place</th>
+                    <th>Date</th>
+                    <th>State</th>
+                    <th>Fine</th>
+                    <th>Receipt Amount</th>
+                    <th>Service Charge</th>
+                    <th>Documents</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Table data will be inserted here dynamically -->
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="pagination">
+        <button id="firstPage" onclick="goToFirstPage()">First</button>
+        <button id="prevPage" onclick="goToPrevPage()">Previous</button>
+        <div class="page-selector">
+            <span>Page</span>
+            <input type="number" id="pageInput" min="1" value="1">
+            <span>of</span>
+            <span id="totalPages">1</span>
+            <button onclick="goToPage()">Go</button>
+        </div>
+        <div class="page-info">
+            Showing <span id="startRecord">1</span> to <span id="endRecord">20</span> of <span id="totalRecords">0</span> records
+        </div>
+        <button id="nextPage" onclick="goToNextPage()">Next</button>
+        <button id="lastPage" onclick="goToLastPage()">Last</button>
+    </div>
+
+    <script>
+        // This will hold all the data from the CSV
+        let allData = [];
+        
+        // Current state variables
+        let currentPage = 1;
+        let recordsPerPage = 20;
+        let filteredData = [];
+
+        // CSV parsing function
+        function parseCSV(csv) {
+            const lines = csv.split('\n');
+            const headers = lines[0].split(',');
+            
+            // Fix header names - Receipt Amout should be Receipt Amount
+            const fixedHeaders = headers.map(h => h === 'Receipt Amout' ? 'Receipt Amount' : h);
+            
+            const result = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                if (lines[i].trim() === '') continue;
+                
+                // Handle commas within quoted fields
+                let currentLine = lines[i];
+                const values = [];
+                let inQuotes = false;
+                let currentValue = '';
+                
+                for (let j = 0; j < currentLine.length; j++) {
+                    const char = currentLine[j];
+                    
+                    if (char === '"' && (j === 0 || currentLine[j-1] !== '\\')) {
+                        inQuotes = !inQuotes;
+                    } else if (char === ',' && !inQuotes) {
+                        values.push(currentValue);
+                        currentValue = '';
+                    } else {
+                        currentValue += char;
+                    }
+                }
+                values.push(currentValue);
+                
+                // Remove quotes from values
+                for (let j = 0; j < values.length; j++) {
+                    if (values[j].startsWith('"') && values[j].endsWith('"')) {
+                        values[j] = values[j].substring(1, values[j].length - 1);
+                    }
+                }
+                
+                const obj = {};
+                for (let j = 0; j < Math.min(fixedHeaders.length, values.length); j++) {
+                    obj[fixedHeaders[j]] = values[j];
+                }
+                result.push(obj);
+            }
+            
+            return result;
+        }
+
+        // Initialize the table with data from CSV
+        document.addEventListener('DOMContentLoaded', function() {
+            // Read the CSV file
+            fetch('./magenta.csv')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    allData = parseCSV(data);
+                    filteredData = [...allData];
+                    updateTable();
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                })
+                .catch(error => {
+                    console.error('There has been a problem with your fetch operation:', error);
+                    
+                    // If fetch fails (e.g., when running locally), use sample data
+                    console.log('Using sample data instead...');
+                    useSampleData();
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                });
+        });
+
+        function useSampleData() {
+            // This function populates the table with data when CSV loading fails
+            allData = [
+                {"Registration Number": "DL51GD3869", "Chassis_No": "MBX0009PN1G203996", "ChallanNo": "UP108602230927175401", "Place": "117, Khera Colony Main Rd, Institutional Area, Block E, Sector 62, Noida, Uttar Pradesh 201010, India", "Date": "##########", "State": "UP", "Fine": "500", "Receipt Amount": "300", "Service Charge": "50", "Documents": ""},
+                {"Registration Number": "DL51GD4601", "Chassis_No": "MD93WD6CZNK515795", "ChallanNo": "DL19500250705153353", "Place": "BIKANER CHOWK", "Date": "##########", "State": "DL", "Fine": "20000", "Receipt Amount": "5000", "Service Charge": "50", "Documents": ""},
+                {"Registration Number": "DL51GD4601", "Chassis_No": "MD93WD6CZNK515795", "ChallanNo": "DL19500250705153709", "Place": "BIKANER CHOWK", "Date": "##########", "State": "DL", "Fine": "20000", "Receipt Amount": "5000", "Service Charge": "50", "Documents": ""},
+                // Add more sample data entries here if needed
+            ];
+            filteredData = [...allData];
+            updateTable();
+        }
+
+        function updateTable() {
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+            
+            const totalPages = Math.ceil(filteredData.length / recordsPerPage);
+            document.getElementById('totalPages').textContent = totalPages;
+            document.getElementById('totalRecords').textContent = filteredData.length;
+            
+            // Adjust current page if it's out of bounds
+            if (currentPage > totalPages) {
+                currentPage = totalPages || 1;
+            }
+            
+            const start = (currentPage - 1) * recordsPerPage;
+            let end = start + recordsPerPage;
+            if (end > filteredData.length) {
+                end = filteredData.length;
+            }
+            
+            document.getElementById('startRecord').textContent = filteredData.length > 0 ? start + 1 : 0;
+            document.getElementById('endRecord').textContent = end;
+            document.getElementById('pageInput').value = currentPage;
+            
+            // Create table rows
+            for (let i = start; i < end; i++) {
+                const data = filteredData[i];
+                const row = document.createElement('tr');
+                
+                // Add S.No column
+                const snoCell = document.createElement('td');
+                snoCell.textContent = i + 1;
+                row.appendChild(snoCell);
+                
+                // Add data cells
+                const fields = [
+                    "Registration Number", 
+                    "Chassis_No", 
+                    "ChallanNo", 
+                    "Place", 
+                    "Date", 
+                    "State", 
+                    "Fine", 
+                    "Receipt Amount", 
+                    "Service Charge", 
+                    "Documents"
+                ];
+                
+                fields.forEach(field => {
+                    const cell = document.createElement('td');
+                    cell.textContent = data[field] || "";
+                    row.appendChild(cell);
+                });
+                
+                tableBody.appendChild(row);
+            }
+            
+            // Update pagination buttons
+            document.getElementById('prevPage').disabled = currentPage === 1;
+            document.getElementById('firstPage').disabled = currentPage === 1;
+            document.getElementById('nextPage').disabled = currentPage === totalPages || totalPages === 0;
+            document.getElementById('lastPage').disabled = currentPage === totalPages || totalPages === 0;
+        }
+
+        function filterTable() {
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+            
+            if (searchText === '') {
+                filteredData = [...allData];
+            } else {
+                filteredData = allData.filter(item => {
+                    // Search in all fields
+                    return Object.values(item).some(value => 
+                        value && String(value).toLowerCase().includes(searchText)
+                    );
+                });
+            }
+            
+            currentPage = 1;
+            updateTable();
+        }
+
+        function changeRecordsPerPage() {
+            recordsPerPage = parseInt(document.getElementById('recordsPerPage').value);
+            currentPage = 1;
+            updateTable();
+        }
+
+        function goToFirstPage() {
+            currentPage = 1;
+            updateTable();
+        }
+
+        function goToPrevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                updateTable();
+            }
+        }
+
+        function goToNextPage() {
+            const totalPages = Math.ceil(filteredData.length / recordsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                updateTable();
+            }
+        }
+
+        function goToLastPage() {
+            const totalPages = Math.ceil(filteredData.length / recordsPerPage);
+            currentPage = totalPages;
+            updateTable();
+        }
+
+        function goToPage() {
+            const pageInput = document.getElementById('pageInput');
+            const totalPages = Math.ceil(filteredData.length / recordsPerPage);
+            let page = parseInt(pageInput.value);
+            
+            if (isNaN(page) || page < 1) {
+                page = 1;
+            } else if (page > totalPages) {
+                page = totalPages;
+            }
+            
+            currentPage = page;
+            pageInput.value = page;
+            updateTable();
+        }
+    </script>
+</body>
+</html>
