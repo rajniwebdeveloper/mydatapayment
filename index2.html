@@ -5,102 +5,281 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Traffic Challan Data</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Adding Font Awesome for better icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            color: #333;
         }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-top: 20px;
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
         }
-        th, td {
+        
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            background-color: #ffffff;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #1a73e8;
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        .timestamp {
+            text-align: right;
+            font-style: italic;
+            color: #555;
+            font-size: 14px;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            background-color: #ffffff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .filter-group {
+            display: flex;
+            align-items: center;
+        }
+        
+        select, button {
+            padding: 8px 12px;
             border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
+            border-radius: 4px;
+            font-size: 14px;
+            background-color: #fff;
         }
-        th {
-            background-color: #f2f2f2;
-            position: sticky;
-            top: 0;
+        
+        button {
+            background-color: #1a73e8;
+            color: white;
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.3s;
         }
-        .table-container {
-            max-height: 600px;
-            overflow-y: auto;
+        
+        button:hover {
+            background-color: #165db5;
         }
-        .highlight-blue {
-            background-color: #d4e6f1;
-        }
-        .highlight-red {
-            background-color: #f2d7d5;
-        }
-        .row-20 {
-            background-color: #fcf8e3;
-            font-weight: bold;
-        }
+        
         .loading {
             text-align: center;
             font-size: 18px;
             margin-top: 100px;
-        }
-        .timestamp {
-            text-align: right;
-            margin-bottom: 10px;
-            font-style: italic;
             color: #555;
         }
+        
+        .table-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 0;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+            position: sticky;
+            top: 0;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .highlight-blue {
+            background-color: #e8f0fe !important;
+        }
+        
+        .highlight-red {
+            background-color: #fde8e7 !important;
+        }
+        
+        .row-20 {
+            background-color: #fff8e1;
+            font-weight: 600;
+        }
+        
         .copied {
             background-color: #d4e6f1 !important;
         }
+        
+        .clickable {
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .clickable:hover {
+            background-color: #eaf2fd;
+        }
+        
+        .clickable::after {
+            content: "\f0c5";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            position: absolute;
+            right: 5px;
+            opacity: 0.3;
+            transition: opacity 0.3s;
+        }
+        
+        .clickable:hover::after {
+            opacity: 1;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .pagination-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .page-info {
+            font-size: 14px;
+        }
+        
         .toast {
             visibility: hidden;
             min-width: 250px;
             background-color: #333;
             color: #fff;
             text-align: center;
-            border-radius: 2px;
+            border-radius: 4px;
             padding: 16px;
             position: fixed;
             z-index: 1;
             left: 50%;
             bottom: 30px;
             transform: translateX(-50%);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
         }
+        
         .toast.show {
             visibility: visible;
             animation: fadein 0.5s, fadeout 0.5s 2.5s;
         }
+        
         @keyframes fadein {
             from {bottom: 0; opacity: 0;}
             to {bottom: 30px; opacity: 1;}
         }
+        
         @keyframes fadeout {
             from {bottom: 30px; opacity: 1;}
             to {bottom: 0; opacity: 0;}
         }
-        .header-section {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        
+        /* No data message */
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-style: italic;
         }
     </style>
 </head>
 <body>
-    <div class="header-section">
-        <h1>Traffic Challan Data Viewer</h1>
-        <div class="timestamp" id="timestamp">2025-08-07 13:56:48 UTC</div>
-    </div>
-    
-    <div class="loading" id="loading">Loading data from check_magenta.xlsx...</div>
-    
-    <div class="table-container">
-        <table id="dataTable"></table>
+    <div class="container">
+        <div class="header-section">
+            <h1><i class="fas fa-receipt"></i> Traffic Challan Data Viewer</h1>
+            <div class="timestamp" id="timestamp">2025-08-07 14:03:32 UTC</div>
+        </div>
+        
+        <div class="filters">
+            <div class="filter-group">
+                <label for="statusFilter">Status: </label>
+                <select id="statusFilter">
+                    <option value="all">All</option>
+                    <option value="paid">Paid</option>
+                    <option value="unpaid">Unpaid</option>
+                    <option value="pending">Pending</option>
+                </select>
+            </div>
+            <button id="applyFilters"><i class="fas fa-filter"></i> Apply Filters</button>
+            <button id="resetFilters"><i class="fas fa-undo"></i> Reset Filters</button>
+        </div>
+        
+        <div class="loading" id="loading">
+            <i class="fas fa-spinner fa-spin"></i> Loading data from check_magenta.xlsx...
+        </div>
+        
+        <div class="table-container">
+            <table id="dataTable"></table>
+        </div>
+        
+        <div class="pagination">
+            <div class="page-info">
+                Showing <span id="entriesInfo">0-0 of 0</span> entries
+            </div>
+            <div class="pagination-controls">
+                <button id="prevPage" disabled><i class="fas fa-chevron-left"></i> Previous</button>
+                <span id="pageIndicator">Page 1 of 1</span>
+                <button id="nextPage" disabled>Next <i class="fas fa-chevron-right"></i></button>
+            </div>
+            <div>
+                <select id="entriesPerPage">
+                    <option value="20" selected>20 per page</option>
+                    <option value="50">50 per page</option>
+                    <option value="100">100 per page</option>
+                </select>
+            </div>
+        </div>
     </div>
 
     <div id="toast" class="toast">Text copied to clipboard</div>
 
     <script>
+        // Global variables for pagination and data management
+        let allData = [];
+        let filteredData = [];
+        let currentPage = 1;
+        let entriesPerPage = 20;
+        let statusColumnIndex = -1;
+        let challanColIndex = -1;
+        let chassisColIndex = -1;
+        
         // Function to display current date and time in UTC
         function updateTimestamp() {
             const now = new Date();
@@ -124,10 +303,89 @@
             const worksheet = workbook.Sheets[worksheetName];
             
             // Convert worksheet to JSON
-            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            allData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
             
-            // Display the data in a table
-            displayData(jsonData);
+            // Find column indices
+            findColumnIndices();
+            
+            // Apply initial filtering and display
+            applyFilters();
+        }
+        
+        // Function to find column indices
+        function findColumnIndices() {
+            // Check header row to find relevant column indices
+            for (let i = 0; i < allData[0].length; i++) {
+                const header = String(allData[0][i]).toLowerCase();
+                
+                // Find challan column
+                if (header.includes('challan') && header.includes('no')) {
+                    challanColIndex = i;
+                }
+                
+                // Find chassis column
+                if (header.includes('chassis') || header.includes('chasis')) {
+                    chassisColIndex = i;
+                }
+                
+                // Find status column
+                if (header.includes('status')) {
+                    statusColumnIndex = i;
+                }
+            }
+        }
+        
+        // Function to apply filters
+        function applyFilters() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            
+            // Start with all data except the header row
+            let tempData = [allData[0]]; // Include header row
+            
+            // Filter rows from the original data
+            for (let i = 1; i < allData.length; i++) {
+                const row = allData[i];
+                
+                // Skip rows where challan number is null or empty
+                if (challanColIndex !== -1 && (!row[challanColIndex] || row[challanColIndex] === "")) {
+                    continue;
+                }
+                
+                // Apply status filter if it's not set to "all"
+                if (statusFilter !== "all" && statusColumnIndex !== -1) {
+                    const status = String(row[statusColumnIndex] || "").toLowerCase();
+                    
+                    if (statusFilter === "paid" && !status.includes("paid")) {
+                        continue;
+                    } else if (statusFilter === "unpaid" && !status.includes("unpaid")) {
+                        continue;
+                    } else if (statusFilter === "pending" && !status.includes("pending")) {
+                        continue;
+                    }
+                }
+                
+                tempData.push(row);
+            }
+            
+            filteredData = tempData;
+            currentPage = 1; // Reset to first page when filters change
+            
+            updatePagination();
+            displayData();
+        }
+        
+        // Function to update pagination controls
+        function updatePagination() {
+            entriesPerPage = parseInt(document.getElementById('entriesPerPage').value);
+            const totalPages = Math.max(1, Math.ceil((filteredData.length - 1) / entriesPerPage));
+            
+            document.getElementById('pageIndicator').textContent = `Page ${currentPage} of ${totalPages}`;
+            document.getElementById('prevPage').disabled = (currentPage <= 1);
+            document.getElementById('nextPage').disabled = (currentPage >= totalPages);
+            
+            const startEntry = filteredData.length <= 1 ? 0 : (currentPage - 1) * entriesPerPage + 1;
+            const endEntry = Math.min(startEntry + entriesPerPage - 1, filteredData.length - 1);
+            document.getElementById('entriesInfo').textContent = `${startEntry}-${endEntry} of ${filteredData.length - 1}`;
         }
         
         // Function to display a toast notification
@@ -150,47 +408,51 @@
         }
         
         // Function to display data in a table
-        function displayData(data) {
+        function displayData() {
             const tableElement = document.getElementById('dataTable');
             tableElement.innerHTML = '';
             
-            // Find column indices for challan number and chassis number
-            let challanColIndex = -1;
-            let chassisColIndex = -1;
-            
-            // Check header row to find relevant column indices
-            for (let i = 0; i < data[0].length; i++) {
-                const header = String(data[0][i]).toLowerCase();
-                if (header.includes('challan') && header.includes('no')) {
-                    challanColIndex = i;
-                }
-                if (header.includes('chassis') || header.includes('chasis')) {
-                    chassisColIndex = i;
-                }
+            // Create table header
+            if (filteredData.length > 0) {
+                const headerRow = document.createElement('tr');
+                filteredData[0].forEach(header => {
+                    const th = document.createElement('th');
+                    th.textContent = header;
+                    headerRow.appendChild(th);
+                });
+                tableElement.appendChild(headerRow);
             }
             
-            // Create table header
-            const headerRow = document.createElement('tr');
-            data[0].forEach(header => {
-                const th = document.createElement('th');
-                th.textContent = header;
-                headerRow.appendChild(th);
-            });
-            tableElement.appendChild(headerRow);
+            // Display message if no data
+            if (filteredData.length <= 1) {
+                const noDataRow = document.createElement('tr');
+                const noDataCell = document.createElement('td');
+                noDataCell.colSpan = filteredData.length > 0 ? filteredData[0].length : 1;
+                noDataCell.className = 'no-data';
+                noDataCell.innerHTML = '<i class="fas fa-info-circle"></i> No matching records found';
+                noDataRow.appendChild(noDataCell);
+                tableElement.appendChild(noDataRow);
+                return;
+            }
             
-            // Create table rows
-            for (let i = 1; i < data.length; i++) {
+            // Calculate range of rows to display for current page
+            const startIndex = 1 + (currentPage - 1) * entriesPerPage;
+            const endIndex = Math.min(startIndex + entriesPerPage, filteredData.length);
+            
+            // Create table rows for current page
+            for (let i = startIndex; i < endIndex; i++) {
+                const rowData = filteredData[i];
                 const row = document.createElement('tr');
                 
-                // Highlight row 20 (which is at index 19 since we start counting from 0)
-                if (i === 20) {
+                // Highlight row 20 from the original data
+                if (allData.indexOf(rowData) === 20) {
                     row.classList.add('row-20');
                 }
                 
                 // Add click event to change colors
                 row.addEventListener('click', function(e) {
                     // Only apply the row highlighting if the click is not on a special cell
-                    if (!e.target.classList.contains('copied')) {
+                    if (!e.target.classList.contains('clickable')) {
                         if (this.classList.contains('highlight-blue')) {
                             this.classList.remove('highlight-blue');
                             this.classList.add('highlight-red');
@@ -203,13 +465,13 @@
                 });
                 
                 // Add cell data
-                data[i].forEach((cell, cellIndex) => {
+                rowData.forEach((cell, cellIndex) => {
                     const td = document.createElement('td');
                     td.textContent = cell !== undefined ? cell : '';
                     
                     // Add special handling for challan number
                     if (cellIndex === challanColIndex && cell) {
-                        td.style.cursor = 'pointer';
+                        td.classList.add('clickable');
                         td.title = "Click to copy and open in Virtual Court";
                         td.addEventListener('click', function(e) {
                             e.stopPropagation(); // Prevent row click event
@@ -227,7 +489,7 @@
                     
                     // Add special handling for chassis number
                     if (cellIndex === chassisColIndex && cell) {
-                        td.style.cursor = 'pointer';
+                        td.classList.add('clickable');
                         td.title = "Click to copy last 4 digits";
                         td.addEventListener('click', function(e) {
                             e.stopPropagation(); // Prevent row click event
@@ -252,13 +514,43 @@
             document.getElementById('loading').style.display = 'none';
         }
         
+        // Event handlers for pagination
+        document.getElementById('prevPage').addEventListener('click', function() {
+            if (currentPage > 1) {
+                currentPage--;
+                updatePagination();
+                displayData();
+            }
+        });
+        
+        document.getElementById('nextPage').addEventListener('click', function() {
+            const totalPages = Math.ceil((filteredData.length - 1) / entriesPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                updatePagination();
+                displayData();
+            }
+        });
+        
+        document.getElementById('entriesPerPage').addEventListener('change', function() {
+            updatePagination();
+            displayData();
+        });
+        
+        // Event handlers for filters
+        document.getElementById('applyFilters').addEventListener('click', function() {
+            applyFilters();
+        });
+        
+        document.getElementById('resetFilters').addEventListener('click', function() {
+            document.getElementById('statusFilter').value = 'all';
+            applyFilters();
+        });
+        
         // Load file when page loads
         window.addEventListener('load', function() {
             // Set the initial timestamp
-            updateTimestamp();
-            
-            // Update timestamp every second
-            setInterval(updateTimestamp, 1000);
+            document.getElementById('timestamp').textContent = "2025-08-07 14:03:32 UTC";
             
             // Try to fetch the Excel file
             fetch('./check_magenta.xlsx')
@@ -274,7 +566,8 @@
                 })
                 .catch(error => {
                     console.error('Error loading file:', error);
-                    document.getElementById('loading').textContent = 'Error: ' + error.message;
+                    document.getElementById('loading').innerHTML = 
+                        `<i class="fas fa-exclamation-triangle"></i> Error: ${error.message}`;
                 });
         });
     </script>
