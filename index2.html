@@ -17,9 +17,9 @@
         }
         
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
+            max-width: 100%;
+            padding: 15px;
+            box-sizing: border-box;
         }
         
         .header-section {
@@ -37,6 +37,7 @@
             color: #1a73e8;
             margin: 0;
             font-size: 24px;
+            white-space: nowrap;
         }
         
         .timestamp {
@@ -44,10 +45,12 @@
             font-style: italic;
             color: #555;
             font-size: 14px;
+            white-space: nowrap;
         }
         
         .filters {
             display: flex;
+            flex-wrap: wrap;
             gap: 15px;
             margin-bottom: 20px;
             background-color: #ffffff;
@@ -59,6 +62,7 @@
         .filter-group {
             display: flex;
             align-items: center;
+            gap: 5px;
         }
         
         select, button {
@@ -75,6 +79,7 @@
             cursor: pointer;
             border: none;
             transition: background-color 0.3s;
+            white-space: nowrap;
         }
         
         button:hover {
@@ -92,7 +97,8 @@
             background-color: #ffffff;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
+            overflow: auto;
+            max-height: calc(100vh - 270px);
         }
         
         table {
@@ -105,6 +111,7 @@
             padding: 12px 15px;
             text-align: left;
             border-bottom: 1px solid #e0e0e0;
+            white-space: nowrap;
         }
         
         th {
@@ -113,6 +120,7 @@
             top: 0;
             color: #333;
             font-weight: 600;
+            z-index: 1;
         }
         
         tr:hover {
@@ -161,6 +169,7 @@
         
         .pagination {
             display: flex;
+            flex-wrap: wrap;
             justify-content: space-between;
             align-items: center;
             margin-top: 20px;
@@ -168,6 +177,7 @@
             background-color: #ffffff;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            gap: 10px;
         }
         
         .pagination-controls {
@@ -178,6 +188,11 @@
         
         .page-info {
             font-size: 14px;
+            white-space: nowrap;
+        }
+        
+        #pageIndicator {
+            white-space: nowrap;
         }
         
         .toast {
@@ -189,7 +204,7 @@
             border-radius: 4px;
             padding: 16px;
             position: fixed;
-            z-index: 1;
+            z-index: 10;
             left: 50%;
             bottom: 30px;
             transform: translateX(-50%);
@@ -218,13 +233,59 @@
             color: #666;
             font-style: italic;
         }
+        
+        /* Status badges */
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .status-paid {
+            background-color: #4CAF50;
+        }
+        
+        .status-payable {
+            background-color: #FF9800;
+        }
+        
+        .status-unknown {
+            background-color: #9E9E9E;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .header-section {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .filters {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .pagination {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .pagination-controls {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header-section">
             <h1><i class="fas fa-receipt"></i> Traffic Challan Data Viewer</h1>
-            <div class="timestamp" id="timestamp">2025-08-07 14:03:32 UTC</div>
+            <div class="timestamp" id="timestamp">2025-08-07 14:14:25 UTC</div>
         </div>
         
         <div class="filters">
@@ -233,12 +294,17 @@
                 <select id="statusFilter">
                     <option value="all">All</option>
                     <option value="paid">Paid</option>
-                    <option value="unpaid">Unpaid</option>
-                    <option value="pending">Pending</option>
+                    <option value="payable">Payable</option>
+                    <option value="unknown">Unknown</option>
                 </select>
             </div>
+            <div class="filter-group">
+                <label for="regFilter">Reg. Number: </label>
+                <input type="text" id="regFilter" placeholder="Search registration...">
+            </div>
             <button id="applyFilters"><i class="fas fa-filter"></i> Apply Filters</button>
-            <button id="resetFilters"><i class="fas fa-undo"></i> Reset Filters</button>
+            <button id="resetFilters"><i class="fas fa-undo"></i> Reset</button>
+            <button id="exportBtn"><i class="fas fa-file-export"></i> Export</button>
         </div>
         
         <div class="loading" id="loading">
@@ -254,15 +320,18 @@
                 Showing <span id="entriesInfo">0-0 of 0</span> entries
             </div>
             <div class="pagination-controls">
-                <button id="prevPage" disabled><i class="fas fa-chevron-left"></i> Previous</button>
+                <button id="firstPage" disabled><i class="fas fa-angle-double-left"></i></button>
+                <button id="prevPage" disabled><i class="fas fa-angle-left"></i> Prev</button>
                 <span id="pageIndicator">Page 1 of 1</span>
-                <button id="nextPage" disabled>Next <i class="fas fa-chevron-right"></i></button>
+                <button id="nextPage" disabled>Next <i class="fas fa-angle-right"></i></button>
+                <button id="lastPage" disabled><i class="fas fa-angle-double-right"></i></button>
             </div>
-            <div>
+            <div class="filter-group">
+                <label for="entriesPerPage">Show:</label>
                 <select id="entriesPerPage">
-                    <option value="20" selected>20 per page</option>
-                    <option value="50">50 per page</option>
-                    <option value="100">100 per page</option>
+                    <option value="20" selected>20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
                 </select>
             </div>
         </div>
@@ -279,20 +348,7 @@
         let statusColumnIndex = -1;
         let challanColIndex = -1;
         let chassisColIndex = -1;
-        
-        // Function to display current date and time in UTC
-        function updateTimestamp() {
-            const now = new Date();
-            const year = now.getUTCFullYear();
-            const month = String(now.getUTCMonth() + 1).padStart(2, '0');
-            const day = String(now.getUTCDate()).padStart(2, '0');
-            const hours = String(now.getUTCHours()).padStart(2, '0');
-            const minutes = String(now.getUTCMinutes()).padStart(2, '0');
-            const seconds = String(now.getUTCSeconds()).padStart(2, '0');
-            
-            const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}:${seconds} UTC`;
-            document.getElementById('timestamp').textContent = formattedDate;
-        }
+        let regNumberColIndex = -1;
         
         // Function to process Excel data
         function processExcelData(data) {
@@ -332,12 +388,19 @@
                 if (header.includes('status')) {
                     statusColumnIndex = i;
                 }
+                
+                // Find registration number column
+                if ((header.includes('reg') && header.includes('no')) || 
+                    header.includes('registration')) {
+                    regNumberColIndex = i;
+                }
             }
         }
         
         // Function to apply filters
         function applyFilters() {
             const statusFilter = document.getElementById('statusFilter').value;
+            const regFilter = document.getElementById('regFilter').value.toLowerCase();
             
             // Start with all data except the header row
             let tempData = [allData[0]]; // Include header row
@@ -351,15 +414,27 @@
                     continue;
                 }
                 
+                // Apply registration number filter if provided
+                if (regFilter && regNumberColIndex !== -1) {
+                    const regNumber = String(row[regNumberColIndex] || "").toLowerCase();
+                    if (!regNumber.includes(regFilter)) {
+                        continue;
+                    }
+                }
+                
                 // Apply status filter if it's not set to "all"
                 if (statusFilter !== "all" && statusColumnIndex !== -1) {
                     const status = String(row[statusColumnIndex] || "").toLowerCase();
                     
                     if (statusFilter === "paid" && !status.includes("paid")) {
                         continue;
-                    } else if (statusFilter === "unpaid" && !status.includes("unpaid")) {
+                    } else if (statusFilter === "payable" && !status.includes("payable")) {
                         continue;
-                    } else if (statusFilter === "pending" && !status.includes("pending")) {
+                    } else if (statusFilter === "unknown" && 
+                              (!status || status === "" || status.includes("unknown"))) {
+                        // This condition will match empty status or "unknown" status
+                    } else if (statusFilter === "unknown" && 
+                              (status.includes("paid") || status.includes("payable"))) {
                         continue;
                     }
                 }
@@ -380,8 +455,10 @@
             const totalPages = Math.max(1, Math.ceil((filteredData.length - 1) / entriesPerPage));
             
             document.getElementById('pageIndicator').textContent = `Page ${currentPage} of ${totalPages}`;
+            document.getElementById('firstPage').disabled = (currentPage <= 1);
             document.getElementById('prevPage').disabled = (currentPage <= 1);
             document.getElementById('nextPage').disabled = (currentPage >= totalPages);
+            document.getElementById('lastPage').disabled = (currentPage >= totalPages);
             
             const startEntry = filteredData.length <= 1 ? 0 : (currentPage - 1) * entriesPerPage + 1;
             const endEntry = Math.min(startEntry + entriesPerPage - 1, filteredData.length - 1);
@@ -404,6 +481,20 @@
             } catch (err) {
                 console.error('Failed to copy text: ', err);
                 showToast("Failed to copy text");
+            }
+        }
+        
+        // Function to format status with badges
+        function formatStatusCell(status) {
+            if (!status) return '<span class="status-badge status-unknown">Unknown</span>';
+            
+            status = status.toLowerCase();
+            if (status.includes('paid')) {
+                return '<span class="status-badge status-paid">Paid</span>';
+            } else if (status.includes('payable')) {
+                return '<span class="status-badge status-payable">Payable</span>';
+            } else {
+                return '<span class="status-badge status-unknown">Unknown</span>';
             }
         }
         
@@ -467,7 +558,13 @@
                 // Add cell data
                 rowData.forEach((cell, cellIndex) => {
                     const td = document.createElement('td');
-                    td.textContent = cell !== undefined ? cell : '';
+                    
+                    // Format status column with badges
+                    if (cellIndex === statusColumnIndex) {
+                        td.innerHTML = formatStatusCell(cell);
+                    } else {
+                        td.textContent = cell !== undefined ? cell : '';
+                    }
                     
                     // Add special handling for challan number
                     if (cellIndex === challanColIndex && cell) {
@@ -514,7 +611,32 @@
             document.getElementById('loading').style.display = 'none';
         }
         
+        // Function to export filtered data to Excel
+        function exportToExcel() {
+            /* Create worksheet from filtered data */
+            const ws = XLSX.utils.aoa_to_sheet(filteredData);
+            
+            /* Create workbook and add the worksheet */
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "FilteredData");
+            
+            /* Generate file name with date */
+            const date = new Date();
+            const timestamp = date.toISOString().replace(/[:.]/g, "-").substring(0, 19);
+            const fileName = `challan_data_${timestamp}.xlsx`;
+            
+            /* Save to file */
+            XLSX.writeFile(wb, fileName);
+            showToast(`Exported to ${fileName}`);
+        }
+        
         // Event handlers for pagination
+        document.getElementById('firstPage').addEventListener('click', function() {
+            currentPage = 1;
+            updatePagination();
+            displayData();
+        });
+        
         document.getElementById('prevPage').addEventListener('click', function() {
             if (currentPage > 1) {
                 currentPage--;
@@ -532,6 +654,13 @@
             }
         });
         
+        document.getElementById('lastPage').addEventListener('click', function() {
+            const totalPages = Math.ceil((filteredData.length - 1) / entriesPerPage);
+            currentPage = totalPages;
+            updatePagination();
+            displayData();
+        });
+        
         document.getElementById('entriesPerPage').addEventListener('change', function() {
             updatePagination();
             displayData();
@@ -544,13 +673,17 @@
         
         document.getElementById('resetFilters').addEventListener('click', function() {
             document.getElementById('statusFilter').value = 'all';
+            document.getElementById('regFilter').value = '';
             applyFilters();
         });
         
+        // Event handler for export button
+        document.getElementById('exportBtn').addEventListener('click', exportToExcel);
+        
         // Load file when page loads
         window.addEventListener('load', function() {
-            // Set the initial timestamp
-            document.getElementById('timestamp').textContent = "2025-08-07 14:03:32 UTC";
+            // Set the timestamp to the provided value
+            document.getElementById('timestamp').textContent = "2025-08-07 14:14:25 UTC";
             
             // Try to fetch the Excel file
             fetch('./check_magenta.xlsx')
